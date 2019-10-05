@@ -73,6 +73,10 @@ Options:
 ```
 
 ## Installation
+### Prerequisites
+[pywin32](https://github.com/mhammond/pywin32) to enable communication between c# and python  
+[Win D2XX Drivers](https://www.enttec.co.uk/en/product/controls/dmx-usb-interfaces/open-dmx-usb/) downloaded directly from Enttec's website
+
 ### Binarys
 In order to use PODU you need the DMXClient(Python) and the DMXServer(C#), both of which can be downloaded on the [release](https://github.com/Coronon/PyOpenDmxUsb/releases) tab.
 ### Sources
