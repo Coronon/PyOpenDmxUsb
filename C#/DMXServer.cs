@@ -88,7 +88,7 @@ namespace DMXServer
                                     try {
                                         dmxCommand = temp.Split();
                                         //Console.WriteLine("DMX Command length: {0}, Invalid-Length: {1}", dmxCommand.Length, (dmxCommand.Length%2 == 0));
-                                        if (dmxCommand.Length == 0) {
+                                        if ((dmxCommand.Length%2) == 0) {
                                             throw new Exception();
                                         }
 
