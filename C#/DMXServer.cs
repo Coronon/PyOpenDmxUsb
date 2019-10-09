@@ -17,6 +17,7 @@ namespace DMXServer
         static bool stayUp = false; //If the Server should quit if all Clients disconnect
         static bool show_help = false;
         static string pipeName = "";
+        static List<int> blockedChannels = new List<int>(); //Contains all channels that are blocked for any reason (Effects, etc...)
         public static void Main(string[] args){
             //Commandline arguments
             int nPos = -1;
@@ -93,8 +94,15 @@ namespace DMXServer
                                         }
 
                                         for (int i = 1; i < ((dmxCommand.Length-1)/2)+1; i++) {
-                                            val1 = Int16.Parse(dmxCommand[i*2-1]);
-                                            val2 =  byte.Parse(dmxCommand[i*2]);
+                                            val1 = Int16.Parse(dmxCommand[i*2-1]); //Channel
+                                            val2 =  byte.Parse(dmxCommand[i*2]); //Value
+
+                                            //Check if channel is blocked
+                                            if (blockedChannels.Contains(val1)) {
+                                                if (verbose) Console.WriteLine("Channel {0} is blocked atm", val1);
+                                                continue;
+                                            }
+
                                             //Console.WriteLine("{0} -> Val1: {1}, Val2: {2}", i, val1, val2);
                                             if (val1 < 0 || val1 > 513 || val2 < 0 || val2 > 255) {
                                                 throw new Exception();

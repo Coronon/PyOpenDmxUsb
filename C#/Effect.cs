@@ -25,6 +25,8 @@ namespace Effects {
             string input;
             string inp;
 
+            static List<int> blockedChannels = new List<int>();
+
             List<int> dmxVal1 = new List<int>(); //time
             List<int> dmxVal2 = new List<int>(); //channel
             List<byte> dmxVal3 = new List<byte>(); //value
@@ -61,6 +63,13 @@ namespace Effects {
                             val1 = Int16.Parse(effectCommand[3*i]);
                             val2 =  Int16.Parse(effectCommand[3*i+1]);
                             val3 =  byte.Parse(effectCommand[3*i+2]);
+
+                            //Check if channel is blocked
+                            if (blockedChannels.Contains(val1)) {
+                                if (verbose) Console.WriteLine("Channel {0} is blocked atm", val1);
+                                continue;
+                            }
+
                             //Console.WriteLine("{0} -> Val2: {1}, Val3: {2}, ", val1, val2, val3);
                             if ( val1 < 100 || val1 % 100 != 0 || val2 < 0 || val2 > 513 || val3 < 0 || val3 > 255) {
                                 Console.WriteLine("IF exception");
@@ -76,9 +85,6 @@ namespace Effects {
                         
                         EffectAddClass worker = new EffectAddClass(effectName, dmxVal1, dmxVal2, dmxVal3);
                         worker.addEffect();
-                        
-                        
-                        Thread.Sleep(200000);
 
                         // var watch = System.Diagnostics.Stopwatch.StartNew();
                         // DMX.effectsQueue();
