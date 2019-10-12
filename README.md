@@ -34,6 +34,10 @@ dmxClient.write("DMX 18 90 19 40")
 
 dmxClient.write({20:'30', '21': 243})
 
+dmxClient.effect([12500, 22, 128])
+
+dmxClient.effect("EFFECT 1500 23 176")
+
   
 
 dmxClient.close()
