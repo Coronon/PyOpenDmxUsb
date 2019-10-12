@@ -90,13 +90,14 @@ dmxClient.close()
 
 This will close the connection to the DMXServer
 
-### Effects
+### Effects/Animations
 
 PODU provides you with an easy way to animate your channel values.
 You can instruct the DMXServer to change the values of as many channels as you want to a specific one over x amounts of milliseconds(ms has to be divisible by 100).
 
 ```py
 dmxClient.effect([time, channel, value...])
+dmxClient.effect("EFFECT 12500 22 128")
 ```
 
 Note that *all* channels used in the effect stay blocked until the *whole* effect is over.
