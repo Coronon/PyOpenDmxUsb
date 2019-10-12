@@ -53,7 +53,7 @@ class DMXClient():
                 print("Disconnected")
 
     def write(self, message):
-        """Sends a DMXCommand to the DMXServer to control Enttec OPEN DMX USB
+        """Sends a DMXCommand to the DMXServer to control an Enttec OPEN DMX USB
         
         Arguments:
             message {string} -- ('DMX channel value...') DMXCommand to send with unlimited channel->value pairs
@@ -76,6 +76,35 @@ class DMXClient():
         elif messaget == dict:
             for key, value in message.items():
                 command += ' ' + str(key) + ' ' + str(value)
+        elif messaget == str:
+            command = message
+        else:
+            raise ValueError("DMXCommand has invalid data type")
+
+        if not self.connected:
+            raise DMXServerError("Not connected to DMXServer")
+        self._write(command)
+
+    def effect(self, message):
+        """Sends a DMXEffect to the DMXServer to control an Enttec OPEN DMX USB
+        
+        Arguments:
+            message {string} -- ('EFFECT time channel value...') DMXEffect to send with unlimited time->channel->value pairs
+            message {list} -- ([time, channel, value...]) DMXEffect to send with unlimited time->channel->value pairs
+        
+        Raises:
+            DMXServerError: Not connected to DMXServer
+            ValueError: Malformed DMXEffect
+        """
+
+        #Check type of message to convert to string DMXCommand
+        messaget = type(message)
+        command = "EFFECT"
+        if messaget == list:
+            if len(message) % 3 != 0:
+                raise ValueError("Malformed Effect-List")
+            for i in message:
+                command += " " + str(i)
         elif messaget == str:
             command = message
         else:
