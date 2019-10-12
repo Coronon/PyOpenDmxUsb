@@ -13,10 +13,10 @@ namespace DMXServer
 {
 
     public class MainClass {
-        static bool verbose = false;
+        static bool verbose = false; //If the Server should output verbose messages
         static bool stayUp = false; //If the Server should quit if all Clients disconnect
-        static bool show_help = false;
-        static string pipeName = "";
+        static bool show_help = false; //Helper flag for showing the help text (-h)
+        static string pipeName = ""; //The name of the namedPipe to listen for
         static List<int> blockedChannels = new List<int>(); //Contains all channels that are blocked for any reason (Effects, etc...)
         public static void Main(string[] args){
             //Commandline arguments
@@ -42,6 +42,7 @@ namespace DMXServer
                     }
                 }
 
+                //Basic error checking in pipeName (-n -s) -> -s would be the pipeName
                 if (nPos != -1) {
                     pipeName = args[nPos];
                     if (pipeName.Contains("-")) throw new Exception();
@@ -61,14 +62,15 @@ namespace DMXServer
             if (verbose) Console.WriteLine("Name: {0}, V: {1}, S: {2}, H: {3}", pipeName, verbose, stayUp, show_help);
 
             //DMXServer
-            if (verbose) Console.WriteLine("DMXServer started");
-            OpenDMX.start();
-            if (verbose) Console.WriteLine("DMXLink opened");
+            if (verbose) Console.WriteLine("[DEBUG] - DMXServer started");
+            OpenDMX.start(); //Starting the OpenDMX interface
+            if (verbose) Console.WriteLine("[DEBUG] - DMXLink opened");
             do {
+                //Define namedPipe
                 using (NamedPipeClientStream pipeClient =
                 new NamedPipeClientStream(".", pipeName, PipeDirection.In)) {
                         // Connect to the pipe or wait until the pipe is available.
-                        if (verbose) Console.Write("Waiting for connection to DMXClient...");
+                        if (verbose) Console.Write("[DEBUG] - Waiting for connection to DMXClient...");
                         pipeClient.Connect();
 
                         if (verbose) Console.WriteLine("Connected");
@@ -77,10 +79,10 @@ namespace DMXServer
                             //variables used for command handling
                             string temp;
                             string[] dmxCommand;
-                            List<int> dmxVal1 = new List<int>();
-                            List<byte> dmxVal2 = new List<byte>();
-                            int val1;
-                            byte val2;
+                            List<int> dmxChannelL = new List<int>();
+                            List<byte> dmxValueL = new List<byte>();
+                            int channel;
+                            byte value;
 
                             //Command handling
                             while ((temp = sr.ReadLine()) != null) {
@@ -89,30 +91,37 @@ namespace DMXServer
                                     try {
                                         dmxCommand = temp.Split();
                                         //Console.WriteLine("DMX Command length: {0}, Invalid-Length: {1}", dmxCommand.Length, (dmxCommand.Length%2 == 0));
+
+                                        //DMX Command basic error checking
                                         if ((dmxCommand.Length%2) == 0) {
+                                            if (verbose) Console.WriteLine("[ERROR] - Modulo exception");
                                             throw new Exception();
                                         }
-
+                                        
+                                        //Extract Channel-Value pairs from DMX command, check them and add them to a list
                                         for (int i = 1; i < ((dmxCommand.Length-1)/2)+1; i++) {
-                                            val1 = Int16.Parse(dmxCommand[i*2-1]); //Channel
-                                            val2 =  byte.Parse(dmxCommand[i*2]); //Value
+                                            channel = Int16.Parse(dmxCommand[i*2-1]); //Channel
+                                            value =  byte.Parse(dmxCommand[i*2]); //Value
 
                                             //Check if channel is blocked
                                             if (blockedChannels.Contains(val1)) {
-                                                if (verbose) Console.WriteLine("Channel {0} is blocked atm", val1);
+                                                if (verbose) Console.WriteLine("[DEBUG] - Channel {0} is blocked atm", channel);
                                                 continue;
                                             }
 
                                             //Console.WriteLine("{0} -> Val1: {1}, Val2: {2}", i, val1, val2);
-                                            if (val1 < 0 || val1 > 513 || val2 < 0 || val2 > 255) {
+                                            if (channel < 0 || channel > 513 || value < 0 || value > 255) {
                                                 throw new Exception();
                                             }
-                                            dmxVal1.Add(val1);
-                                            dmxVal2.Add(val2);
+                                            dmxChannelL.Add(channel);
+                                            dmxValueL.Add(value);
                                         }
-                                        for (int i = 0; i < dmxVal1.Count; i++) {
-                                            //Console.WriteLine("Setting: {0} -> {1}", dmxVal1[i], dmxVal2[i]);
-                                            OpenDMX.setDmxValue(dmxVal1[i], dmxVal2[i]);
+
+                                        //Itterate over list and set the channels->values
+                                        //We do this in a seperate loop to ensure that the whole DMXCommand was valid (1 fails ->all fail)
+                                        for (int i = 0; i < dmxChannelL.Count; i++) {
+                                            if (verbose) Console.WriteLine("[DEBUG] - Setting: {0} -> {1}", dmxChannelL[i], dmxValueL[i]);
+                                            OpenDMX.setDmxValue(dmxChannelL[i], dmxValueL[i]);
                                         }
                                     } catch {
                                         if (verbose) Console.WriteLine("[ERROR] - Malformed DMXCommand: {0}", temp);
@@ -126,9 +135,9 @@ namespace DMXServer
                             }
                         }
                     }
-                    if (verbose) Console.WriteLine("Connection to DMXClient lost...");
+                    if (verbose) Console.WriteLine("[DEBUG] - Connection to DMXClient lost...");
                 } while (stayUp);
-            if (verbose) Console.WriteLine("Closing...");
+            if (verbose) Console.WriteLine("[DEBUG] - Closing...");
             Thread.Sleep(500); //Sleep so that the last received command can still be executed from the worker thread
             OpenDMX.stop();
             Environment.Exit(Environment.ExitCode);
@@ -146,6 +155,9 @@ namespace DMXServer
         }
     }
 
+
+    //The Class that interfaces with the OPEN DMX USB taken from enttecs website: https://www.enttec.com.au/product/lighting-communication-protocols/open-dmx-usb/
+    //All new methods are commented
     public class OpenDMX {
         public static byte[] buffer = new byte[513];
         public static uint handle;

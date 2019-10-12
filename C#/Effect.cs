@@ -6,180 +6,138 @@ using System.Text;
 using System.Collections.Generic;
 using System.Linq;
 
-
-//Dont forget DMX.tickSpeed!!!
-
 namespace Effects {
 
     public class MainClass {
 
-        public static List<string> activeEffects = new List<string>();
-        public static void Main() {
-            
-            DMX.start();
-            // Console.Write("Waiting for it...");
-            // Thread.Sleep(5000);
-            // Console.WriteLine("Let`s Go!");
+        public static Dictionary<string, List<int>> activeEffects = new Dictionary<string, List<int>>(); //Dict of all active effects and the channels they block
+        public static List<int> blockedChannels = new List<int>(); //List of all blocked channels that cannot the controlled manually
 
-            bool verbose = true;
-            string input;
+        public static bool verbose = true;
+        public static void Main() {
+            DMX.start();
             string inp;
 
-            static List<int> blockedChannels = new List<int>();
-
-            List<int> dmxVal1 = new List<int>(); //time
-            List<int> dmxVal2 = new List<int>(); //channel
-            List<byte> dmxVal3 = new List<byte>(); //value
-
-            string effectName;
-
-            int val1;
-            int val2;
-            byte val3;
-
-            //EFFECT 1500 18 12 -> in 1500ms channel 18 to value 12
-// EFFECT T 12500 5 100 10000 6 255
-            // Dictionary<string, string> openWith = new Dictionary<string, string>();
-            // DMX.start();
             while (true) {
                 Console.Write("Befehl: ");
                 inp = Console.ReadLine();
-                if (inp.StartsWith("EFFECT ")) {
-                    input = inp.Substring(7); //Cut out the 'EFFECT '
-                    try {
-                        List<string> effectCommand = input.Split().ToList();
-                        effectName = effectCommand.First();
-                        effectCommand.RemoveAt(0);
-
-                        if ((effectCommand.Count%3) != 0 || activeEffects.Contains(effectName)) {
-                            Console.WriteLine("Modulo or effectName exception");
-                            throw new Exception();
+                try {
+                    if (inp.StartsWith("EFFECT ")) {
+                        EFFECT(inp);
+                    } else {
+                            Console.WriteLine("Ungültiger Befehl");
                         }
-
-                        activeEffects.Add(effectName);
-                        // EFFECT a 12500 5 100 20000 2 10 1000 8 255 500 1 128
-                        for (int i = 0; i < (effectCommand.Count/3); i++) {
-                            //Console.WriteLine("Val1: {0}, Val2: {1}, Val3: {2}", effectCommand[3*i], effectCommand[3*i+1], effectCommand[3*i+2]);
-                            val1 = Int16.Parse(effectCommand[3*i]);
-                            val2 =  Int16.Parse(effectCommand[3*i+1]);
-                            val3 =  byte.Parse(effectCommand[3*i+2]);
-
-                            //Check if channel is blocked
-                            if (blockedChannels.Contains(val1)) {
-                                if (verbose) Console.WriteLine("Channel {0} is blocked atm", val1);
-                                continue;
-                            }
-
-                            //Console.WriteLine("{0} -> Val2: {1}, Val3: {2}, ", val1, val2, val3);
-                            if ( val1 < 100 || val1 % 100 != 0 || val2 < 0 || val2 > 513 || val3 < 0 || val3 > 255) {
-                                Console.WriteLine("IF exception");
-                                throw new Exception();
-                            }
-                            dmxVal1.Add(val1);
-                            dmxVal2.Add(val2);
-                            dmxVal3.Add(val3);
-
-
-
-                        }
-                        
-                        EffectAddClass worker = new EffectAddClass(effectName, dmxVal1, dmxVal2, dmxVal3);
-                        worker.addEffect();
-
-                        // var watch = System.Diagnostics.Stopwatch.StartNew();
-                        // DMX.effectsQueue();
-                        // watch.Stop();
-                        // Console.WriteLine("Elappsed: {0}", watch.ElapsedMilliseconds);
-
-                        // DMX.effectsQueue();
-                        // Console.WriteLine("--------------------");
-                        // DMX.effectsQueue();
-                        // Console.WriteLine("--------------------");
-
-
-                        //System.IO.File.WriteAllText("output.txt", DMX.buffer);
 
                     } catch (Exception e) {
                         if (verbose) Console.WriteLine("[ERROR] - Malformed DMXCommand: {0}; Error: {1}", inp, e);
                     }
 
-                    
-
-
-
-
-                } else {
-                    Console.WriteLine("Ungültiger Befehl");
-                }
 
             }
-
-
-
-            //Thread.Sleep(500); //Sleep so that the last received command can still be executed from the worker thread
-            //Environment.Exit(Environment.ExitCode);
         }
+    
+        static void EFFECT(string inp) {
+            List<int> dmxTimeL = new List<int>(); //time
+            List<int> dmxChannelL = new List<int>(); //channel
+            List<byte> dmxValueL = new List<byte>(); //value
+
+            string effectName; //name of the effect
+
+            int time; //Time of a subeffect
+            int channel; //Channel of a subeffect
+            byte value; //Value of a subeffect
+
+
+            List<string> effectCommand = inp.Substring(7).Split().ToList(); //Cut out the 'EFFECT ', split times, channels and values into list
+            effectName = effectCommand.First(); //first element in the list is the name
+            effectCommand.RemoveAt(0); //get rid of the name in the list
+
+            if ((effectCommand.Count%3) != 0 || activeEffects.ContainsKey(effectName)) { //Check if every value has channel and time and if effect name already taken
+                Console.WriteLine("Modulo or effectName exception");
+                throw new Exception();
+            }
+
+            activeEffects.Add(effectName, new List<int>()); //Add the effect name to active effects to block another effect with the same name
+            for (int i = 0; i < (effectCommand.Count/3); i++) { //Loop over time, channel, value list and split them into their own lists
+                //Console.WriteLine("time: {0}, channel: {1}, value: {2}", effectCommand[3*i], effectCommand[3*i+1], effectCommand[3*i+2]);
+
+                //Convert elements to their data type
+                time = Int16.Parse(effectCommand[3*i]); 
+                channel =  Int16.Parse(effectCommand[3*i+1]);
+                value =  byte.Parse(effectCommand[3*i+2]);
+
+                //Check if channel is blocked
+                if (blockedChannels.Contains(channel)) {
+                    if (verbose) Console.WriteLine("Channel {0} is blocked atm", channel);
+                    activeEffects.Remove(effectName);
+                    throw new Exception();
+                }
+                //Block channel for duration of effect
+                blockedChannels.Add(channel);
+
+                //Console.WriteLine("{0} -> channel: {1}, value: {2}, ", time, channel, value);
+
+                //Check if values in allowed range
+                if ( time < 100 || time % 100 != 0 || channel < 0 || channel > 513 || value < 0 || value > 255) {
+                    Console.WriteLine("IF exception");
+                    throw new Exception();
+                }
+
+                //Add time, channel and value to their own list
+                dmxTimeL.Add(time);
+                dmxChannelL.Add(channel);
+                dmxValueL.Add(value);
+            }
+            //Insert the channel list into the active effects list to unblock channels after the effect ends
+            activeEffects[effectName] = dmxChannelL;
+
+            //TODO: See if this is efficient -> maybe move to normal method
+            //Spawn a new thread that precomputes the dmx values and makes them ready for execution
+            EffectAddClass worker = new EffectAddClass(effectName, dmxTimeL, dmxChannelL, dmxValueL);
+            Thread EAthread = new Thread(new ThreadStart(worker.addEffect));
+            EAthread.Start();
+}
     }
 
-
+    //Class that precomutes dmx values for effects
     public class EffectAddClass {
-
-
-        // ausgang = [10, 0]
-
-        // time = [15000, 20000]
-        // channel = [17, 18]
-        // value = [128, 255]
-
-        // # dX = neuerWert - ausgangsWert
-
-        // eA = []
-
-        // for i in range(len(time)):
-        //     t = time[i]
-        //     c = channel[i]
-        //     v = value[i]
-        //     a = ausgang[i] #Should use channel
-
-        //     diffPL = (v-a)/(t/100) #Difference per loop
-
-        //     s = []
-        //     for j in range(int(t/100)):
-        //         s.append(c)
-        //         s.append(round(diffPL*j)+a)
-        //     eA.append(s)
 
         private string name;
         private List<int> time;
         private List<int> channel;
         private List<byte> value;
 
+
+        //Constructor that gets the variables for computing the effect
         public EffectAddClass(string name, List<int> time, List<int> channel, List<byte> value) {
             this.name = name;
             this.time = time;
             this.channel = channel;
             this.value = value;
         }
+
+        //Method that computes the dmx values based on their timing, current value and the value they should reach
         public void addEffect() {
             List<object> effectList = new List<object>();
-            int t;
-            int c;
-            int a;
-            int v;
-            double diffPL;
+            int t; //Time
+            int c; //Channel
+            int a; //Current value of channel in OpenDMX.buffer
+            int v; //Value to reach after effect end
             int tD; //tickspeed divisor
+            double diffPL; //Difference of valueToReach and currentValue devided by the tickspeed divisor
             for (int i = 0; i < time.Count; i++) {
                 a = DMX.buffer[i];
                 v = value[i];
-                if (v == a) continue;
+                if (v == a) continue; //Skip if current value is the same as the value we are supposed to approach
                 t = time[i];
                 c = channel[i];
                 tD = t/DMX.tickSpeed;
                 diffPL = (double)(value[i]-a)/(double)tD; //We need the cast to double so that we dont get an int as a result
                 //Console.WriteLine("diffPL: {0}, tD: {1}, value: {2}, a: {3}, = {4}", diffPL, tD, value[i], a, (double)(value[i]-a)/(double)tD);
 
-                List<object> s = new List<object>();
+                List<object> s = new List<object>(); //List to save the steps in
 
+                //
                 for (int j = 1; j < tD+1; j++) {
                     s.Add(c);
                     s.Add(Math.Round(diffPL*j, MidpointRounding.AwayFromZero)+a); // Math.Round(value, MidpointRounding.AwayFromZero))
@@ -196,51 +154,64 @@ namespace Effects {
 
     public class DMX {
         public static byte[] buffer = new byte[10];
-        public static Dictionary<string, List<object>> effectsDict = new Dictionary<string, List<object>>();
-        static int channel;
-        static byte value;
+        public static Dictionary<string, List<object>> effectsDict = new Dictionary<string, List<object>>(); //Dict that stores all current effects
 
-        public static List<string> effectsToRemove = new List<string>();
+        public static int tickSpeed = 100; //The tick speed for setting new DMX Values
 
-        public static int tickSpeed = 100;
-
+        //Called every OpenDMX tick to apply currently running effects
         public static void effectsQueue() {
-            bool delFlag;
-            foreach(KeyValuePair<string, List<object>> entry in effectsDict)
+            bool delFlag; //Indicate if the effect is over
+            int channel; //The channel of an effect
+            byte value; //The Value of an effect
+            List<string> effectsToRemove = new List<string>(); //Stores all effects that are over and should be deleted
+
+            foreach(KeyValuePair<string, List<object>> entry in effectsDict) //Itterate over all effects
             {
-                delFlag = true;
+                delFlag = true; //for checking if the effect has no lists that contain new values
 
-                //EFFECT D 12500 5 100 15000 6 128
-
-                foreach (List<object> i in entry.Value) {
-                    if (i.Count > 0) {
-                        delFlag = false;
+                foreach (List<object> i in entry.Value) { //Itterate over all subeffects
+                    if (i.Count > 0) { //Check that the list is not empty
+                        delFlag = false; //Indicate that there are still subeffects running
+                        //Channel
                         channel = Convert.ToInt32(i.First());
                         i.RemoveAt(0);
+                        //Value
                         value = Convert.ToByte(i.First());
                         i.RemoveAt(0);
-                        //set channel and value
 
+                        //Push value into DMXBuffer at channel
                         //Console.WriteLine("Channel: {0}, Value: {1}", channel, value);
-                        //setDmx(channel, value);
+                        setDmxValue(channel, value);
 
                     }
                 }
 
-                if (delFlag) effectsToRemove.Add(entry.Key);
-                // do something with entry.Value or entry.Key
+                if (delFlag) effectsToRemove.Add(entry.Key); //If no subeffects are running anymore add the effect to the remove list
             }
 
+
+            //Remove all over effects
             foreach(string i in effectsToRemove) {
+                //Remove from OpenDMX effectDict
                 effectsDict.Remove(i);
+                //Remove from MainClass activeEffects and unblock channels
+                foreach (int j in MainClass.activeEffects[i]) {
+                    MainClass.blockedChannels.Remove(j);
+                }
                 MainClass.activeEffects.Remove(i);
             }
+            effectsToRemove.Clear();
         }
 
 
         public static void start() {
             Thread thread = new Thread(new ThreadStart(write));
             thread.Start();
+        }
+
+        public static void setDmxValue(int channel, byte value)
+        {
+            buffer[channel] = value;
         }
 
         public static void write() {
