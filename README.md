@@ -97,7 +97,7 @@ This will close the connection to the DMXServer
 ### Effects/Animations
 
 PODU provides you with an easy way to animate your channel values.
-You can instruct the DMXServer to change the values of as many channels as you want to a specific one over x amounts of milliseconds(ms has to be divisible by 100).
+You can instruct the DMXServer to change the values of as many channels as you want to a specific one over x amounts of milliseconds(ms has to be divisible by the DMXServer´s tickspeed which is normally set to 100ms).
 
 ```py
 dmxClient.effect([time, channel, value...])
