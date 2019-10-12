@@ -23,20 +23,20 @@ namespace Effects {
                 inp = Console.ReadLine();
                 try {
                     if (inp.StartsWith("EFFECT ")) {
-                        EFFECT(inp);
+                        command_EFFECT(inp);
                     } else {
                             Console.WriteLine("Ungültiger Befehl");
                         }
 
-                    } catch (Exception e) {
-                        if (verbose) Console.WriteLine("[ERROR] - Malformed DMXCommand: {0}; Error: {1}", inp, e);
-                    }
+                } catch (Exception e) {
+                    if (verbose) Console.WriteLine("[ERROR] - Malformed DMXCommand: {0}; Error: {1}", inp, e);
+                }
 
 
             }
         }
     
-        static void EFFECT(string inp) {
+        static void command_EFFECT(string input) {
             List<int> dmxTimeL = new List<int>(); //time
             List<int> dmxChannelL = new List<int>(); //channel
             List<byte> dmxValueL = new List<byte>(); //value
@@ -48,7 +48,7 @@ namespace Effects {
             byte value; //Value of a subeffect
 
 
-            List<string> effectCommand = inp.Substring(7).Split().ToList(); //Cut out the 'EFFECT ', split times, channels and values into list
+            List<string> effectCommand = input.Substring(7).Split().ToList(); //Cut out the 'EFFECT ', split times, channels and values into list
             effectName = effectCommand.First(); //first element in the list is the name
             effectCommand.RemoveAt(0); //get rid of the name in the list
 
@@ -100,7 +100,7 @@ namespace Effects {
     }
 
     //Class that precomutes dmx values for effects
-    public class EffectAddClass {
+    public class Effect_AddClass {
 
         private string name;
         private List<int> time;
@@ -109,7 +109,7 @@ namespace Effects {
 
 
         //Constructor that gets the variables for computing the effect
-        public EffectAddClass(string name, List<int> time, List<int> channel, List<byte> value) {
+        public Effect_AddClass(string name, List<int> time, List<int> channel, List<byte> value) {
             this.name = name;
             this.time = time;
             this.channel = channel;
