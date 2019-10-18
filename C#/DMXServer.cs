@@ -97,17 +97,17 @@ namespace DMXServer
                                         if (verbose) Console.WriteLine("[ERROR] - Command not supported: {0}", input);
                                     }
                                 } catch {
-                                    if (verbose) Console.WriteLine("[ERROR] - Malformed DMXCommand: {0}; Error: {1}", input);
+                                    if (verbose) Console.WriteLine("[ERROR] - Malformed DMXCommand: {0}", input);
                                 }
                             }
                         }
                     if (verbose) Console.WriteLine("[DEBUG] - Connection to DMXClient lost...");
-                    if (verbose) Console.WriteLine("[DEBUG] - Closing...");
-                    Thread.Sleep(500); //Sleep so that the last received command can still be executed from the worker thread
-                    OpenDMX.stop();
-                    Environment.Exit(Environment.ExitCode);
-                    }
+                }
             } while (stayUp);
+            if (verbose) Console.WriteLine("[DEBUG] - Closing...");
+            Thread.Sleep(500); //Sleep so that the last received command can still be executed from the worker thread
+            OpenDMX.stop();
+            Environment.Exit(Environment.ExitCode);
         }
 
         //Shows the help text (-h)
