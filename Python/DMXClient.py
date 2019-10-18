@@ -89,8 +89,8 @@ class DMXClient():
         """Sends a DMXEffect to the DMXServer to control an Enttec OPEN DMX USB
         
         Arguments:
-            message {string} -- ('EFFECT time channel value...') DMXEffect to send with unlimited time->channel->value pairs
-            message {list} -- ([time, channel, value...]) DMXEffect to send with unlimited time->channel->value pairs
+            message {string} -- ('EFFECT name time channel value...') DMXEffect to send with unlimited time->channel->value pairs
+            message {list} -- ([name, time, channel, value...]) DMXEffect to send with unlimited time->channel->value pairs
         
         Raises:
             DMXServerError: Not connected to DMXServer
@@ -101,6 +101,7 @@ class DMXClient():
         messaget = type(message)
         command = "EFFECT"
         if messaget == list:
+            command += " {0}".format(message.pop(0)) #HACK: !This will be migrated to f-Strings in a future release
             if len(message) % 3 != 0:
                 raise ValueError("Malformed Effect-List")
             for i in message:
