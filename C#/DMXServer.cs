@@ -204,16 +204,19 @@ namespace DMXServer
                     activeEffects.Remove(effectName);
                     throw new Exception();
                 }
-                //Block channel for duration of effect
-                blockedChannels.Add(channel);
 
                 //Console.WriteLine("{0} -> channel: {1}, value: {2}, ", time, channel, value);
 
                 //Check if values in allowed range
-                if ( time < 100 || time % 100 != 0 || channel < 0 || channel > 513 || value < 0 || value > 255) {
+                if ( time < 0 || time % 100 != 0 || channel < 0 || channel > 513 || value < 0 || value > 255) {
                     Console.WriteLine("IF exception");
+                    activeEffects.Remove(effectName);
                     throw new Exception();
                 }
+                if (time == 0) time = OpenDMX.tickSpeed; //time=0 will always be fastest
+
+                //Block channel for duration of effect
+                blockedChannels.Add(channel);
 
                 //Add time, channel and value to their own list
                 dmxTimeL.Add(time);
@@ -228,6 +231,7 @@ namespace DMXServer
             Effect_AddClass worker = new Effect_AddClass(effectName, dmxTimeL, dmxChannelL, dmxValueL);
             Thread EAthread = new Thread(new ThreadStart(worker.addEffect));
             EAthread.Start();
+            //Console.WriteLine("EFFECT ADDED");
         }
 
 
@@ -260,11 +264,11 @@ namespace DMXServer
             int tD; //tickspeed divisor
             double diffPL; //Difference of valueToReach and currentValue devided by the tickspeed divisor
             for (int i = 0; i < time.Count; i++) {
-                a = OpenDMX.buffer[i];
+                c = channel[i];
+                a = OpenDMX.buffer[c];
                 v = value[i];
                 if (v == a) continue; //Skip if current value is the same as the value we are supposed to approach
                 t = time[i];
-                c = channel[i];
                 tD = t/OpenDMX.tickSpeed;
                 diffPL = (double)(value[i]-a)/(double)tD; //We need the cast to double so that we dont get an int as a result
                 //Console.WriteLine("diffPL: {0}, tD: {1}, value: {2}, a: {3}, = {4}", diffPL, tD, value[i], a, (double)(value[i]-a)/(double)tD);
@@ -346,7 +350,6 @@ namespace DMXServer
             int channel; //The channel of an effect
             byte value; //The Value of an effect
             List<string> effectsToRemove = new List<string>(); //Stores all effects that are over and should be deleted
-
             foreach(KeyValuePair<string, List<object>> entry in effectsDict) //Itterate over all effects
             {
                 delFlag = true; //for checking if the effect has no lists that contain new values
@@ -383,6 +386,7 @@ namespace DMXServer
                 MainClass.activeEffects.Remove(i);
             }
             effectsToRemove.Clear();
+            //Console.WriteLine("Lenght: {0}", effectsDict.Count);
         }
 
         public static void start()
