@@ -34,9 +34,9 @@ dmxClient.write("DMX 18 90 19 40")
 
 dmxClient.write({20:'30', '21': 243})
 
-dmxClient.effect([12500, 22, 128])
+dmxClient.effect(["MyEffect", 12500, 22, 128])
 
-dmxClient.effect("EFFECT 1500 23 176")
+dmxClient.effect("EFFECT AnotherOne 1500 23 176")
 
   
 
@@ -100,11 +100,12 @@ PODU provides you with an easy way to animate your channel values.
 You can instruct the DMXServer to change the values of as many channels as you want to a specific one over x amounts of milliseconds(ms has to be divisible by the DMXServer´s tickspeed which is normally set to 100ms).
 
 ```py
-dmxClient.effect([time, channel, value...])
-dmxClient.effect("EFFECT 12500 22 128")
+dmxClient.effect([name, time, channel, value...])
+dmxClient.effect("EFFECT animation 12500 22 128")
 ```
 
 Note that *all* channels used in the effect stay blocked until the *whole* effect is over.
+The name must only be given _once_.
   
 ## DMXServer Usage
 
@@ -127,6 +128,10 @@ Options:
 -s Wait for another connection after a DMXClient disconnects.
 
 ```
+
+## Wiki
+
+You may also look into the wiki hosted on GitHub
 
 ## Installation
 
