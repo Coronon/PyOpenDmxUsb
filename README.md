@@ -48,7 +48,7 @@ As you can see, there are many different formats you can choose from.
 
 ## Usage
 
-After getting an FMF object the following functions can be called:
+After getting an DMXClient object the following functions can be called:
 
 ### Connect to server
 
