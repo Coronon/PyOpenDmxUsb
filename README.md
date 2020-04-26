@@ -72,11 +72,11 @@ dmxClient.write(dict)
 
 ```
 
-These will send command to the server setting the designated channels to the specified values
+These will send a command to the server setting the designated channels to the specified values
 
 #### Faster method
 
-As commands to the server are send as string you may also use the following method to get a tiny performance boost:
+As commands to the server are send as a string you may also use the following method to get a tiny performance boost:
 
 ```py
 
@@ -97,7 +97,7 @@ This will close the connection to the DMXServer
 ### Effects/Animations
 
 PODU provides you with an easy way to animate your channel values.
-You can instruct the DMXServer to change the values of as many channels as you want to a specific one over x amounts of milliseconds(ms has to be divisible by the DMXServer´s tickspeed which is normally set to 100ms).
+You can instruct the DMXServer to change the values of as many channels as you want to a specific one over x milliseconds(ms has to be divisible by the DMXServer´s tickspeed which is normally set to 100ms).
 
 ```py
 dmxClient.effect([name, time, channel, value...])
@@ -105,7 +105,7 @@ dmxClient.effect("EFFECT animation 12500 22 128")
 ```
 
 Note that *all* channels used in the effect stay blocked until the *whole* effect is over.
-The name must only be given _once_.
+The name must only be specified _once_.
   
 ## DMXServer Usage
 
